@@ -99,8 +99,8 @@ function isValidChain(chain: Block[]): boolean {
 
 function replaceChain(newBlocks) {
 	if (isValidChain(newBlocks) && newBlocks.length > getBlockchain().length) {
-	console.log("betterChain detected, replaceing"	)
-		blockChain = newBlocks		
+		console.log("betterChain detected, replaceing");
+		blockChain = newBlocks;
 		broadcastLatest();
 	}
 }
@@ -110,5 +110,31 @@ function getBlockchain() {
 }
 
 function broadcastLatest() {}
+
+function initHttpServer(port: number) {
+	const app = express();
+	app.user(express.json());
+
+	app.get("/block", (req, res) => {
+		res.send(getBlockchain());
+	});
+
+	app.post("/mineBlock", (req, res) => {
+		const newData = req.body.data;
+		generateNextBlock(newData);
+	});
+
+	app.post("/peers", (req, res)=>{
+		res.send(getSockets.map((s:any)=>s._socket.remoteAddress + ":" + s._socket.remotePort));
+	})
+
+	app.post("/addPeer", (req,res)=>{
+		res.sendStatus(200);
+	})
+
+	app.listen(port, ()=>{
+		console.log("server listening on port", port);
+	})
+}
 
 let blockChain: Block[] = [genesisBlock];
