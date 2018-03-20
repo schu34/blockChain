@@ -1,4 +1,4 @@
-import CryptoJS from "crypto-js";
+import {SHA256} from "crypto-js";
 
 class Block {
 	public index: number;
@@ -26,7 +26,7 @@ class Block {
 		timestamp: number,
 		data: string
 	): string {
-		return CryptoJS.SHA256(
+		return SHA256(
 			index + previousHash + timestamp + data
 		).toString();
 	}
