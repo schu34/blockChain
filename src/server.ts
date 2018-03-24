@@ -72,7 +72,7 @@ function initWS(port: number) {
 	const wss = new WebSocket.Server({ port });
 
 	wss.on("connection", ws => {
-		console.log("connection recieved", ws);
+		console.log("connection recieved");
 		ws.on("message", message => {
 			console.log("recieved message", message);
 		});
