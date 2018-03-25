@@ -1,87 +1,98 @@
 import * as express from "express";
 import { getBlockchain, generateNextBlock } from "./Blockchain";
 import * as WebSocket from "ws";
+import * as fs from "fs";
 
 const expressPort = parseInt(process.env.EPORT);
 const wsPort = parseInt(process.env.WSPORT);
-console.log(process.env.EPORT)
+console.log(process.env.EPORT);
 function broadcastLatest() {}
 
 function initHttpServer(port: number) {
-	const app = express();
-	app.use(express.json());
+  const app = express();
+  app.use(express.json());
 
-	app.get("/block", (req, res) => {
-		res.send(getBlockchain());
-	});
+  app.get("/block", (req, res) => {
+    res.send(getBlockchain());
+  });
 
-	app.post("/mineBlock", (req, res) => {
-		const newData = req.body.data;
-		generateNextBlock(newData);
-	});
+  app.post("/mineBlock", (req, res) => {
+    const newData = req.body.data;
+    generateNextBlock(newData);
+  });
 
-	app.post("/peers", (req, res) => {
-		res.send(
-			getSockets().map(
-				(s: any) => s._socket.remoteAddress + ":" + s._socket.remotePort
-			)
-		);
-	});
+  app.post("/peers", (req, res) => {
+    res.send(
+      getSockets().map(
+        (s: any) => s._socket.remoteAddress + ":" + s._socket.remotePort
+      )
+    );
+  });
 
-	app.post("/addPeer", (req, res) => {
-		addPeer(req.body.url);
-		res.sendStatus(200);
-	});
+  app.post("/addPeer", (req, res) => {
+    addPeer(req.body.url);
+    res.sendStatus(200);
+  });
 
-	app.post("/broadcast", (req, res) => {
-		const  data = req.body.data ;
-		console.log(req.body.data)
-		broadcast("broadcasting from " + (wsPort|| 8888) + "\n" + data);
-		res.sendStatus(200);
-	});
+  app.post("/broadcast", (req, res) => {
+    const data = req.body.data;
+    console.log(req.body.data);
+    broadcast("broadcasting from " + (wsPort || 8888) + "\n" + data);
+    res.sendStatus(200);
+  });
 
-	app.listen(port, () => {
-		console.log("server listening on port", port);
-	});
+  app.listen(port, () => {
+    console.log("server listening on port", port);
+  });
 }
 
 function getSockets() {
-	return [];
+  return [];
 }
 
 function broadcast(data: string) {
-	console.log("going to broadcast", data);
-	(wss.clients as any).forEach(client => {
-	console.log("found client...");
-	if (client.readyState === WebSocket.OPEN) {
-	console.log("client is ready sending data", data);
-			client.send(data);
-		}
-	});
+  console.log("going to broadcast", data);
+  (wss.clients as any).forEach(client => {
+    console.log("found client...");
+    if (client.readyState === WebSocket.OPEN) {
+      console.log("client is ready sending data", data);
+      client.send(data);
+    }
+  });
 }
 
 function addPeer(url: string) {
-	const ws = new WebSocket(url);
-	ws.on("message", message => {
-		console.log("message recieved", message);
-	});
+  const ws = new WebSocket(url);
+  ws.on("message", message => {
+    console.log("message recieved", message);
+  });
 }
 
 //websockets stuff
+const cache = [];
+
 function initWS(port: number) {
-	const wss = new WebSocket.Server({ port });
+  const wss = new WebSocket.Server({ port });
 
-	wss.on("connection", ws => {
-		console.log("connection recieved");
-		ws.on("message", message => {
-			console.log("recieved message", message);
-		});
-	});
+  wss.on("connection", ws => {
+    console.log("connection recieved");
+    fs.writeFileSync(
+      "./ws.json",
+      JSON.stringify(
+        ws,
+        null,
+        4
+      )
+    );
+    ws.on("message", message => {
+      console.log("recieved message", message);
+    });
+  });
 
-	// wss["broadcast"] = message => {};
+  // wss["broadcast"] = message => {};
 
-	return wss;
+  return wss;
 }
 
 initHttpServer(expressPort || 8888);
-const wss = initWS( wsPort || 8080);
+const wss = initWS(wsPort || 8080);
