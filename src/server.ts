@@ -75,15 +75,8 @@ function initWS(port: number) {
   const wss = new WebSocket.Server({ port });
 
   wss.on("connection", ws => {
+    
     console.log("connection recieved");
-    fs.writeFileSync(
-      "./ws.json",
-      JSON.stringify(
-        ws,
-        null,
-        4
-      )
-    );
     ws.on("message", message => {
       console.log("recieved message", message);
     });
