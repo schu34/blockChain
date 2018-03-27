@@ -1,5 +1,5 @@
 import * as express from "express";
-import { getBlockchain, generateNextBlock, getLatestBlock} from "./Blockchain";
+import { getBlockchain, generateNextBlock, getLatestBlock } from "./Blockchain";
 import * as WebSocket from "ws";
 import * as fs from "fs";
 import Block from "./Block";
@@ -50,7 +50,6 @@ function getSockets() {
   return [];
 }
 
-
 function addPeer(url: string) {
   const ws = new WebSocket(url);
   ws.on("message", message => {
@@ -92,12 +91,12 @@ function initMessageHandler(ws: WebSocket) {}
 
 function initErrorHandler(ws: WebSocket) {}
 
-function handleBlockchainResponse(recievedBlocks: Block[])
+function handleBlockchainResponse(recievedBlocks: Block[]) {}
 
 function write(ws: WebSocket, message: Message) {}
 
-function broadcast(message: Message){
-  sockets.forEach(socket=>write(socket, message));
+function broadcast(message: Message) {
+  sockets.forEach(socket => write(socket, message));
 }
 
 function queryChainLengthMessage(): Message {
@@ -108,12 +107,18 @@ function queryAllMessage(): Message {
   return { type: MessageType.QUERY_ALL, data: null };
 }
 
-function responseChainMessage(): Message{
-  return {type: MessageType.RESPONSE_BLOCKCHAIN, data: JSON.stringify(getBlockchain())}
+function responseChainMessage(): Message {
+  return {
+    type: MessageType.RESPONSE_BLOCKCHAIN,
+    data: JSON.stringify(getBlockchain())
+  };
 }
 
-function responseLatestMessage(): Message{
-  return {type: MessageType.RESPONSE_BLOCKCHAIN, data: JSON.stringify(getLatestBlock())}
+function responseLatestMessage(): Message {
+  return {
+    type: MessageType.RESPONSE_BLOCKCHAIN,
+    data: JSON.stringify(getLatestBlock())
+  };
 }
 initHttpServer(expressPort || 8888);
 const wss = initWS(wsPort || 8080);
