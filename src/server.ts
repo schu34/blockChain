@@ -1,7 +1,8 @@
 import * as express from "express";
-import { getBlockchain, generateNextBlock } from "./Blockchain";
+import { getBlockchain, generateNextBlock, getLatestBlock} from "./Blockchain";
 import * as WebSocket from "ws";
 import * as fs from "fs";
+import Block from "./Block";
 
 const expressPort = parseInt(process.env.EPORT);
 const wsPort = parseInt(process.env.WSPORT);
@@ -37,7 +38,6 @@ function initHttpServer(port: number) {
   app.post("/broadcast", (req, res) => {
     const data = req.body.data;
     console.log(req.body.data);
-    broadcast("broadcasting from " + (wsPort || 8888) + "\n" + data);
     res.sendStatus(200);
   });
 
@@ -50,16 +50,6 @@ function getSockets() {
   return [];
 }
 
-function broadcast(data: string) {
-  console.log("going to broadcast", data);
-  (wss.clients as any).forEach(client => {
-    console.log("found client...");
-    if (client.readyState === WebSocket.OPEN) {
-      console.log("client is ready sending data", data);
-      client.send(data);
-    }
-  });
-}
 
 function addPeer(url: string) {
   const ws = new WebSocket(url);
@@ -69,23 +59,61 @@ function addPeer(url: string) {
 }
 
 //websockets stuff
-const cache = [];
+const sockets: WebSocket[] = [];
 
+enum MessageType {
+  QUERY_LATEST = 0,
+  QUERY_ALL = 1,
+  RESPONSE_BLOCKCHAIN = 2
+}
+
+class Message {
+  public type: MessageType;
+  public data: any;
+}
 function initWS(port: number) {
   const wss = new WebSocket.Server({ port });
 
-  wss.on("connection", ws => {
-    
-    console.log("connection recieved");
-    ws.on("message", message => {
-      console.log("recieved message", message);
-    });
-  });
+  wss.on("connection", initWsConnection);
 
   // wss["broadcast"] = message => {};
 
   return wss;
 }
 
+function initWsConnection(ws: WebSocket) {
+  sockets.push(ws);
+  initMessageHandler(ws);
+  initErrorHandler(ws);
+  write(ws, queryChainLengthMessage());
+}
+
+function initMessageHandler(ws: WebSocket) {}
+
+function initErrorHandler(ws: WebSocket) {}
+
+function handleBlockchainResponse(recievedBlocks: Block[])
+
+function write(ws: WebSocket, message: Message) {}
+
+function broadcast(message: Message){
+  sockets.forEach(socket=>write(socket, message));
+}
+
+function queryChainLengthMessage(): Message {
+  return { type: MessageType.QUERY_LATEST, data: null };
+}
+
+function queryAllMessage(): Message {
+  return { type: MessageType.QUERY_ALL, data: null };
+}
+
+function responseChainMessage(): Message{
+  return {type: MessageType.RESPONSE_BLOCKCHAIN, data: JSON.stringify(getBlockchain())}
+}
+
+function responseLatestMessage(): Message{
+  return {type: MessageType.RESPONSE_BLOCKCHAIN, data: JSON.stringify(getLatestBlock())}
+}
 initHttpServer(expressPort || 8888);
 const wss = initWS(wsPort || 8080);

@@ -80,6 +80,7 @@ function getBlockchain() {return blockChain; }
 
 export {
 	getBlockchain,
-	generateNextBlock
+	getLatestBlock,
+	generateNextBlock, 
 }
 
